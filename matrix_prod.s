@@ -3,30 +3,53 @@
 matrix_prod:            # void matrix_prod(void *A, void *B, void *C, int n);
 	pushq   %rbp
 	movq    %rsp, %rbp # prologue
-    movq    %rdi, -8(%rbp)
-    movq    %rsi, -16(%rbp)
-    movq    %rdx, -24(%rbp)
-    movq    %rcx, -32(%rbp)
-    movq    $0,   %r8
+    movq    %rdi, -8(%rbp) # A
+    movq    %rsi, -16(%rbp) # B
+    movq    %rdx, -24(%rbp) # C
+    movl    %ecx, -32(%rbp) # n
+    movl    $0,   -36(%rbp) # i
 
 outerLoop:
-    cmp     %r8, -32(%rbp)
+    movl   -36(%rbp), %edi
+    cmpl     %edi, -32(%rbp)
     je      endl
-    movq    $0, %r9
+    movl    $0, -40(%rbp) # j
 
 innerLoop:
-    cmp     %r9, -32(%rbp)
+    movl    -40(%rbp), %esi    
+    cmpl     %esi, -32(%rbp)
     je      innerEndl
-    inc     %r9
-
     
 
+    movq    -8(%rbp), %rdi  # A
+    movq    -16(%rbp), %rsi # B
+    movl    -32(%rbp), %edx # n
+    movl    -36(%rbp), %ecx # i
+    movl    -40(%rbp), %r8d # j
+
+    call    dot_prod # rax = # long dot_prod(void *A, void *B, int n, int i, int j);
+
+    # movq    %rax, -56(%rbp)
+    movq    %rax, %rdi
+    movq    $17, %rsi
+    
+    call    mod
+
+    movl    %eax, %edx # rdx = rax = mod()
+    movl    -36(%rbp), %eax # eax = i
+    imull   -32(%rbp), %eax # eax = i * n
+    addl    -40(%rbp), %eax  # eax = i*n+j
+    
+    addq    -24(%rbp), %rax # rax = rax + rcx = C + i*n+j
+    mov    %dl, (%rax) # C[i][j] = rdx
+    
+    add     $1, -40(%rbp)
     jmp     innerLoop
 
-
 innerEndl:
-     inc    %r8
+     add     $1, -36(%rbp)
      jmp outerLoop
 
 endl:
+    pop %rbp
 	ret
